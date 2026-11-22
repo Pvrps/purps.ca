@@ -29,7 +29,7 @@ just preview   # serve that build, as it will run once released
 
 ## How it is laid out
 
-- `src/lib/sites.ts` decides which site a name belongs to. Start here to add one.
+- `src/lib/sites.ts` decides which site a name belongs to, out of the folders under `src/routes/sites/`.
 - `src/routes/sites/<site>/` holds each site's pages.
 - `src/lib/components/` holds what the sites share: the header, the tag, buttons, tool cards.
 - `src/routes/layout.css` holds the shared fonts and colours. A site sets `--accent` and the shared pieces
@@ -43,9 +43,12 @@ and a screen of its own.
 
 ### Adding a site
 
-1. Add its name to `SUBDOMAINS` in `src/lib/sites.ts`.
-2. Add its pages under `src/routes/sites/<name>/`.
-3. Point `<name>.purps.ca` at the app in the reverse proxy.
+1. Add its pages under `src/routes/sites/<name>/`. The folder's name is the first part of its address, so
+   `sites/osu` is `osu.purps.ca`.
+2. Beside them, add a `site.ts` which says what it is: `export const label = 'osu! tools';`.
+
+That is all: it is served under its name and listed on the landing page. The reverse proxy already sends
+every `*.purps.ca` name to the app.
 
 ## Releasing
 

@@ -1,16 +1,15 @@
 /**
  * Which site a request is for.
  *
- * Every site lives in this one app, under `src/routes/sites/<id>`, and is chosen by the name it was asked for:
- * `osu.purps.ca` is the osu site. Any name which isn't a site of its own gets the landing page.
+ * Every site lives in this one app, under `src/routes/sites/<name>`, and is chosen by the name it was asked
+ * for: `osu.purps.ca` is the site in `sites/osu`. Any name which isn't a site of its own gets the landing page.
+ *
+ * Nothing here knows which sites there are: that is read from the folders themselves, in `known.ts`, and
+ * handed in.
  */
 
-export type SiteId = 'landing' | 'osu';
-
-/** The sites with a name of their own, by the first part of that name. */
-const SUBDOMAINS: Record<string, SiteId> = {
-	osu: 'osu'
-};
+/** The site every name without one of its own is given. */
+export const LANDING = 'landing';
 
 /** The addresses a site can be reached under end in one of these: the public one, and one for working on it. */
 const DOMAINS = ['purps.ca', 'localhost'];
@@ -21,24 +20,43 @@ function subdomainOf(hostname: string, domain: string): string | null {
 	return hostname.endsWith(`.${domain}`) ? hostname.slice(0, -domain.length - 1) : null;
 }
 
-export function siteFor(hostname: string): SiteId {
+/** The part of a hostname in front of whichever of the domains it is under, or null if it is under neither. */
+function subdomain(hostname: string): string | null {
 	const name = hostname.toLowerCase();
 
 	for (const domain of DOMAINS) {
-		const subdomain = subdomainOf(name, domain);
-		if (subdomain !== null) return SUBDOMAINS[subdomain] ?? 'landing';
+		const found = subdomainOf(name, domain);
+		if (found !== null) return found;
 	}
 
-	// Reached by some other name entirely, such as a bare address.
-	return 'landing';
+	return null;
+}
+
+/** The site a name belongs to, out of the sites there are. */
+export function siteFor(hostname: string, sites: readonly string[]): string {
+	const name = subdomain(hostname);
+
+	return name !== null && sites.includes(name) ? name : LANDING;
+}
+
+/**
+ * The address of a site, as a link from the page at `from`. While working on the app that is its
+ * `.localhost` name, so a link leads to the copy being worked on; from anywhere else it is the public one.
+ */
+export function addressOf(site: string, from: Pick<URL, 'hostname' | 'protocol' | 'port'>): string {
+	if (subdomainOf(from.hostname.toLowerCase(), 'localhost') !== null) {
+		return `${from.protocol}//${site}.localhost${from.port ? `:${from.port}` : ''}`;
+	}
+
+	return `https://${site}.purps.ca`;
 }
 
 /** Addresses which mean the same on every site, and so are left alone. */
 const SHARED_PATHS = ['/healthz'];
 
 /** Where in the app the page for an address lives. */
-export function routeFor(hostname: string, pathname: string): string {
+export function routeFor(hostname: string, pathname: string, sites: readonly string[]): string {
 	if (SHARED_PATHS.includes(pathname)) return pathname;
 
-	return `/sites/${siteFor(hostname)}${pathname === '/' ? '' : pathname}`;
+	return `/sites/${siteFor(hostname, sites)}${pathname === '/' ? '' : pathname}`;
 }
