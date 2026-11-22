@@ -1,0 +1,12 @@
+.git
+.github
+.devenv
+.direnv
+.svelte-kit
+.vscode
+build
+node_modules
+devenv.*
+.envrc
+justfile
+README.md

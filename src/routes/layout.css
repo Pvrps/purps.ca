@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+/*
+ * What every site shares: the typefaces and the handful of colours they draw on. A site sets `--accent` on its
+ * outermost element, and the shared components take their colour from that.
+ */
+@theme {
+	--font-sans: Inter, 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+	--font-mono: ui-monospace, 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
+
+	--color-ink: #0d0b14;
+	--color-panel: #181524;
+	--color-muted: #a7a3bd;
+	--color-pink: #ff66ab;
+	--color-violet: #8c66ff;
+	--color-sky: #5dd6ff;
+	--color-mint: #b9f5d8;
+	--color-gold: #ffe08a;
+}
+
+html {
+	color-scheme: dark;
+	scroll-behavior: smooth;
+}
+
+body {
+	background: var(--color-ink);
+	color: #f1eff8;
+	font-family: var(--font-sans);
+}

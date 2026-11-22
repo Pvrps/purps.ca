@@ -1,0 +1,263 @@
+/*
+ * The landing page. Everything here is under `.landing`, so none of it reaches any other site: the lines of the
+ * terminal are written into the page as it types, where a component's own styles wouldn't follow them.
+ */
+.landing {
+	--mint: var(--color-mint);
+	--gold: var(--color-gold);
+
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+	/* shown until the 3D scene draws, and as the fallback when WebGL is unavailable */
+	background: linear-gradient(#2f8f86 0%, #63bfa6 45%, #7ccdb2 62%, #6fbf58 100%);
+	color: #fff;
+	font-family: var(--font-mono);
+}
+
+.landing .scene {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+}
+
+.landing .scene canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.landing .gl {
+	opacity: 0;
+	transition: opacity 1.6s ease;
+}
+
+.landing .gl.ready {
+	opacity: 1;
+}
+
+/* the fairy is drawn on its own layer, above the text */
+.landing .fx {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	pointer-events: none;
+}
+
+/* a soft shade under the text, so it reads without sitting in a box */
+.landing .shade {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background:
+		linear-gradient(
+			to left,
+			rgba(8, 46, 42, 0.86) 0%,
+			rgba(8, 46, 42, 0.62) 26%,
+			rgba(8, 46, 42, 0) 58%
+		),
+		radial-gradient(ellipse at center, transparent 60%, rgba(6, 40, 36, 0.3) 100%);
+}
+
+.landing main {
+	position: relative;
+	z-index: 5;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 2rem clamp(1.5rem, 7vw, 8rem);
+	pointer-events: none;
+}
+
+.landing .card {
+	width: min(100%, 30rem);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: clamp(0.9rem, 2.2vh, 1.4rem);
+	text-align: left;
+}
+
+.landing .gem {
+	width: clamp(52px, 8vh, 76px);
+	margin-left: -6px;
+	filter: drop-shadow(0 0 14px rgba(255, 214, 90, 0.6));
+}
+
+.landing .gem .ring {
+	transform-origin: 60px 60px;
+	animation: landing-spin 18s linear infinite;
+}
+
+.landing .gem .ring2 {
+	transform-origin: 60px 60px;
+	animation: landing-spin 26s linear infinite reverse;
+}
+
+.landing .gem .core {
+	animation: landing-pulse 3.2s ease-in-out infinite;
+	transform-origin: 60px 60px;
+}
+
+@keyframes landing-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes landing-pulse {
+	50% {
+		transform: scale(1.06);
+		opacity: 0.85;
+	}
+}
+
+.landing .sub {
+	font-family: var(--font-serif);
+	font-size: clamp(1.35rem, 2.5vw, 2.15rem);
+	line-height: 1.32;
+	font-weight: 400;
+	color: #fff;
+	text-shadow: 0 2px 18px rgba(4, 32, 28, 0.55);
+	text-wrap: balance;
+}
+
+.landing .sub b {
+	color: var(--gold);
+	font-weight: 600;
+}
+
+.landing .term {
+	width: 100%;
+	margin-top: 0.4rem;
+	font-size: clamp(0.68rem, 1.05vw, 0.8rem);
+	line-height: 1.75;
+	border-radius: 14px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: rgba(6, 38, 34, 0.5);
+	-webkit-backdrop-filter: blur(14px) saturate(1.2);
+	backdrop-filter: blur(14px) saturate(1.2);
+	box-shadow: 0 18px 50px rgba(3, 28, 24, 0.35);
+	overflow: hidden;
+}
+
+.landing .term header {
+	display: flex;
+	align-items: center;
+	gap: 0.8em;
+	padding: 0.7em 1.1em;
+	font-size: 0.82em;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.55);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing .term header i {
+	display: flex;
+	gap: 0.45em;
+}
+
+.landing .term header i::before,
+.landing .term header i::after,
+.landing .term header i b {
+	content: '';
+	width: 0.62em;
+	height: 0.62em;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.24);
+}
+
+.landing .term header .clock {
+	margin-left: auto;
+	font-variant-numeric: tabular-nums;
+}
+
+.landing .term pre {
+	font: inherit;
+	padding: 0.9em 1.1em 1.1em;
+	height: 12.6em;
+	overflow: hidden;
+	white-space: pre;
+	color: rgba(236, 255, 246, 0.9);
+}
+
+.landing .term .k {
+	color: rgba(185, 245, 216, 0.55);
+}
+
+.landing .term .w {
+	color: var(--gold);
+}
+
+.landing .term .e {
+	color: #ffb3a1;
+}
+
+.landing .caret {
+	display: inline-block;
+	width: 0.55em;
+	height: 1.05em;
+	vertical-align: -0.15em;
+	background: var(--mint);
+	animation: landing-blink 1s steps(1) infinite;
+}
+
+@keyframes landing-blink {
+	50% {
+		opacity: 0;
+	}
+}
+
+/* tall screens: the text sits at the bottom, under the pedestal */
+@media (max-aspect-ratio: 11/10) {
+	.landing main {
+		align-items: flex-end;
+		justify-content: center;
+		padding: 1.4rem;
+	}
+
+	.landing .card {
+		width: min(100%, 32rem);
+	}
+
+	.landing .shade {
+		background: linear-gradient(
+			to top,
+			rgba(8, 46, 42, 0.92) 0%,
+			rgba(8, 46, 42, 0.8) 38%,
+			rgba(8, 46, 42, 0) 66%
+		);
+	}
+
+	.landing .gem {
+		display: none;
+	}
+
+	.landing .term pre {
+		height: 11em;
+	}
+}
+
+@media (max-height: 560px) {
+	.landing .gem {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.landing .gem .ring,
+	.landing .gem .ring2,
+	.landing .gem .core {
+		animation: none;
+	}
+
+	.landing .gl {
+		transition: none;
+	}
+}
