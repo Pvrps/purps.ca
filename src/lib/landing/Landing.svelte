@@ -1,6 +1,9 @@
 <script lang="ts">
 	import './landing.css';
+	import { page } from '$app/state';
 	import Tag from '#lib/components/Tag.svelte';
+	import { SITES } from '#lib/known.ts';
+	import { addressOf } from '#lib/sites.ts';
 	import { startFairy, startTerminal } from './effects';
 
 	let gl = $state<HTMLCanvasElement>();
@@ -8,10 +11,25 @@
 	let out: HTMLElement;
 	let clock: HTMLElement;
 	let ready = $state(false);
+	// The routes are held back until the terminal has said its piece.
+	let typed = $state(false);
+
+	// Somewhere to go from here, listed by the terminal: each site, by the address it has from wherever this
+	// page was reached.
+	const routes = $derived(
+		SITES.map((site) => {
+			const href = addressOf(site.name, page.url);
+
+			return { href, host: new URL(href).host, label: site.label };
+		})
+	);
 
 	$effect(() => {
 		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		const stops = [startFairy(fx, reduced), startTerminal(out, clock, reduced)];
+		const stops = [
+			startFairy(fx, reduced),
+			startTerminal(out, clock, { reduced, done: () => (typed = true) })
+		];
 		let gone = false;
 
 		// The scene is large, so it is fetched only once the page is up, and only in a browser.
@@ -90,11 +108,6 @@
 
 			<Tag class="text-[clamp(0.62rem,1.1vw,0.74rem)]">404 // unrouted host</Tag>
 
-			<p class="sub">
-				&ldquo;Anybody who comes into the forest will be lost. Everybody will become a
-				<b>Stalfos</b>.&rdquo;
-			</p>
-
 			<div class="term" role="status">
 				<header>
 					<i><b></b></i><span>forest.gateway</span><span class="clock" bind:this={clock}>
@@ -102,6 +115,20 @@
 					</span>
 				</header>
 				<pre bind:this={out}></pre>
+
+				{#if routes.length}
+					<nav class="routes" class:typed aria-label="Sites">
+						<h2>routes</h2>
+						{#each routes as route (route.href)}
+							<a href={route.href}>
+								<span class="arrow" aria-hidden="true">&rarr;</span>
+								<b>{route.host}</b>
+								<i></i>
+								<span>{route.label}</span>
+							</a>
+						{/each}
+					</nav>
+				{/if}
 			</div>
 		</div>
 	</main>

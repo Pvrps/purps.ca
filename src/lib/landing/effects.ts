@@ -1,6 +1,19 @@
 /** The parts of the landing page drawn and typed in the browser: the guide fairy and the terminal. */
 
-/** A fairy which follows the pointer, and wanders by itself when the pointer is still. Returns how to stop it. */
+/** A colour part of the way from one to another, as the three numbers `rgba()` takes. */
+const mix = (from: number[], to: number[], amount: number) =>
+	from.map((value, i) => Math.round(value + (to[i] - value) * amount)).join(',');
+
+// The fairy's colours: as it is, and as it turns over somewhere worth going.
+const GLOW = { calm: [120, 220, 255], keen: [255, 82, 124] };
+const CORE = { calm: [235, 252, 255], keen: [255, 228, 236] };
+const SPARK = { calm: [190, 240, 255], keen: [255, 150, 182] };
+const WING = { calm: [200, 245, 255], keen: [255, 196, 214] };
+
+/**
+ * A fairy which follows the pointer, and wanders by itself when the pointer is still. Over a route it stays
+ * put, turns pink and hops about. Returns how to stop it.
+ */
 export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => void {
 	const context = canvas.getContext('2d')!;
 	const mouse = { x: innerWidth / 2, y: innerHeight / 2, t: 0, active: false };
@@ -9,6 +22,9 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 	let width = 0;
 	let height = 0;
 	let request = 0;
+	// Whether the pointer is over a route, and how far the fairy has got in taking notice: 0 to 1.
+	let overRoute = false;
+	let keen = 0;
 
 	const resize = () => {
 		const ratio = Math.min(devicePixelRatio || 1, 2);
@@ -25,6 +41,11 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 		mouse.y = e.clientY;
 		mouse.t = performance.now();
 		mouse.active = true;
+		overRoute = e.target instanceof Element && e.target.closest('.landing .routes a') !== null;
+	};
+
+	const onLeave = () => {
+		overRoute = false;
 	};
 
 	// A click scatters a burst of sparks.
@@ -62,7 +83,8 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 		turn: number,
 		length: number,
 		breadth: number,
-		flap: number
+		flap: number,
+		rgb: string
 	) => {
 		context.save();
 		context.translate(x, y);
@@ -70,8 +92,8 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 		context.scale(1, flap);
 		context.beginPath();
 		context.ellipse(length * 0.55, 0, length * 0.55, breadth, 0, 0, 6.2832);
-		context.fillStyle = 'rgba(200,245,255,.28)';
-		context.strokeStyle = 'rgba(220,250,255,.75)';
+		context.fillStyle = `rgba(${rgb},.28)`;
+		context.strokeStyle = `rgba(${rgb},.75)`;
 		context.lineWidth = 0.8;
 		context.fill();
 		context.stroke();
@@ -87,8 +109,10 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 
 		context.clearRect(0, 0, width, height);
 
-		// follows the pointer, wanders on its own when idle
-		const idle = !mouse.active || now - mouse.t > 2500;
+		keen += ((overRoute ? 1 : 0) - keen) * Math.min(1, 0.12 * dt);
+
+		// follows the pointer, wanders on its own when idle, but never away from a route it is shown
+		const idle = !overRoute && (!mouse.active || now - mouse.t > 2500);
 		const targetX = idle ? width * (0.5 + 0.34 * Math.sin(t * 0.43)) : mouse.x + 26;
 		const targetY = idle ? height * (0.3 + 0.14 * Math.sin(t * 0.71 + 1)) : mouse.y - 26;
 
@@ -96,15 +120,21 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 		fairy.y += (targetY - fairy.y) * 0.055 * dt;
 
 		const x = fairy.x;
-		const y = fairy.y + Math.sin(t * 3.1) * 5;
+		// bobs gently, and hops when it has found somewhere to go
+		const hop = reduced ? 0 : Math.abs(Math.sin(t * 7.5)) * 13 * keen;
+		const y = fairy.y + Math.sin(t * 3.1) * 5 * (1 - keen) - hop;
+
+		const glowColour = mix(GLOW.calm, GLOW.keen, keen);
+		const sparkColour = mix(SPARK.calm, SPARK.keen, keen);
+		const wingColour = mix(WING.calm, WING.keen, keen);
 
 		context.globalCompositeOperation = 'lighter';
 
-		if (!reduced && Math.random() < 0.55) {
+		if (!reduced && Math.random() < 0.55 + 0.4 * keen) {
 			sparks.push({
 				x,
 				y,
-				vx: (Math.random() - 0.5) * 0.5,
+				vx: (Math.random() - 0.5) * (0.5 + 1.6 * keen),
 				vy: Math.random() * 0.6,
 				life: 1,
 				d: 0.02 + Math.random() * 0.02
@@ -124,19 +154,19 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 				continue;
 			}
 
-			glow(spark.x, spark.y, 5 * spark.life + 1, '190,240,255', 0.7 * spark.life);
+			glow(spark.x, spark.y, 5 * spark.life + 1, sparkColour, 0.7 * spark.life);
 		}
 
-		const flap = reduced ? 0.8 : 0.35 + 0.65 * Math.abs(Math.sin(t * 16));
+		const flap = reduced ? 0.8 : 0.35 + 0.65 * Math.abs(Math.sin(t * (16 + 8 * keen)));
 
 		context.globalCompositeOperation = 'source-over';
-		wing(x, y, -0.55, 19, 5.5, flap);
-		wing(x, y, Math.PI + 0.55, 19, 5.5, flap);
-		wing(x, y, 0.6, 12, 3.6, flap);
-		wing(x, y, Math.PI - 0.6, 12, 3.6, flap);
+		wing(x, y, -0.55, 19, 5.5, flap, wingColour);
+		wing(x, y, Math.PI + 0.55, 19, 5.5, flap, wingColour);
+		wing(x, y, 0.6, 12, 3.6, flap, wingColour);
+		wing(x, y, Math.PI - 0.6, 12, 3.6, flap, wingColour);
 		context.globalCompositeOperation = 'lighter';
-		glow(x, y, 34, '120,220,255', 0.55);
-		glow(x, y, 11, '235,252,255', 1);
+		glow(x, y, 34 + 8 * keen, glowColour, 0.55 + 0.15 * keen);
+		glow(x, y, 11, mix(CORE.calm, CORE.keen, keen), 1);
 		context.globalCompositeOperation = 'source-over';
 
 		request = requestAnimationFrame(frame);
@@ -146,6 +176,7 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 	addEventListener('resize', resize);
 	addEventListener('pointermove', onMove, { passive: true });
 	addEventListener('pointerdown', onDown);
+	document.documentElement.addEventListener('pointerleave', onLeave);
 	request = requestAnimationFrame(frame);
 
 	return () => {
@@ -153,6 +184,7 @@ export function startFairy(canvas: HTMLCanvasElement, reduced: boolean): () => v
 		removeEventListener('resize', resize);
 		removeEventListener('pointermove', onMove);
 		removeEventListener('pointerdown', onDown);
+		document.documentElement.removeEventListener('pointerleave', onLeave);
 	};
 }
 
@@ -162,17 +194,24 @@ const escape = (text: string) =>
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!
 	);
 
-/** Types out what became of the address which was asked for, and keeps a clock. Returns how to stop it. */
-export function startTerminal(out: HTMLElement, clock: HTMLElement, reduced: boolean): () => void {
+/**
+ * Types out what became of the address which was asked for, and keeps a clock. Calls `done` once it has
+ * finished typing. Returns how to stop it.
+ */
+export function startTerminal(
+	out: HTMLElement,
+	clock: HTMLElement,
+	{ reduced, done }: { reduced: boolean; done: () => void }
+): () => void {
 	const host = escape(location.host || 'unknown');
 	const path = escape(location.pathname || '/');
+	const prompt = '<span class="k">&gt;</span>';
 	const caret = '<span class="caret"></span>';
 	const lines = [
-		`<span class="k">&gt;</span> resolve <span class="w">${host}</span>`,
-		`<span class="k">&gt;</span> path    <span class="w">${path}</span>`,
-		`<span class="k">&gt;</span> exploring the woods for a matching route...`,
-		`<span class="e">!</span> no proxy host answers to that name`,
-		`<span class="k">&gt;</span> hint: check the address, then try again`
+		`${prompt} resolve  <span class="w">${host}</span>`,
+		`${prompt} path     <span class="w">${path}</span>`,
+		`${prompt} exploring the woods for a matching route...`,
+		`<span class="e">!</span> no proxy host answers to that name`
 	];
 
 	let timer: ReturnType<typeof setTimeout> | undefined;
@@ -184,13 +223,15 @@ export function startTerminal(out: HTMLElement, clock: HTMLElement, reduced: boo
 
 	if (reduced) {
 		out.innerHTML = lines.join('\n') + '\n' + caret;
+		done();
 	} else {
 		let index = 0;
-		let done = '';
+		let typed = '';
 
 		const typeLine = () => {
 			if (index >= lines.length) {
-				out.innerHTML = done + caret;
+				out.innerHTML = typed + caret;
+				done();
 				return;
 			}
 
@@ -202,24 +243,24 @@ export function startTerminal(out: HTMLElement, clock: HTMLElement, reduced: boo
 			let shown = 0;
 
 			const tick = () => {
-				shown += 2;
+				shown += 3;
 
 				if (shown >= text.length) {
-					done += lines[index] + '\n';
+					typed += lines[index] + '\n';
 					index++;
-					out.innerHTML = done + caret;
-					later(typeLine, 320);
+					out.innerHTML = typed + caret;
+					later(typeLine, 110);
 					return;
 				}
 
-				out.innerHTML = done + escape(text.slice(0, shown)) + caret;
-				later(tick, 22);
+				out.innerHTML = typed + escape(text.slice(0, shown)) + caret;
+				later(tick, 14);
 			};
 
 			tick();
 		};
 
-		later(typeLine, 600);
+		later(typeLine, 200);
 	}
 
 	const tell = () => {

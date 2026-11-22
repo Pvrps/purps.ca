@@ -117,21 +117,6 @@
 	}
 }
 
-.landing .sub {
-	font-family: var(--font-serif);
-	font-size: clamp(1.35rem, 2.5vw, 2.15rem);
-	line-height: 1.32;
-	font-weight: 400;
-	color: #fff;
-	text-shadow: 0 2px 18px rgba(4, 32, 28, 0.55);
-	text-wrap: balance;
-}
-
-.landing .sub b {
-	color: var(--gold);
-	font-weight: 600;
-}
-
 .landing .term {
 	width: 100%;
 	margin-top: 0.4rem;
@@ -181,7 +166,8 @@
 .landing .term pre {
 	font: inherit;
 	padding: 0.9em 1.1em 1.1em;
-	height: 12.6em;
+	/* room for the most it ever types, so nothing below it moves as it does */
+	height: 10.6em;
 	overflow: hidden;
 	white-space: pre;
 	color: rgba(236, 255, 246, 0.9);
@@ -197,6 +183,76 @@
 
 .landing .term .e {
 	color: #ffb3a1;
+}
+
+/* where there is to go, under what the terminal typed */
+.landing .routes {
+	display: grid;
+	gap: 0.15em;
+	padding: 0.9em 0.6em 0.8em;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(3, 26, 23, 0.35);
+	opacity: 0;
+	transform: translateY(4px);
+	transition:
+		opacity 0.35s ease,
+		transform 0.35s ease;
+}
+
+.landing .routes.typed {
+	opacity: 1;
+	transform: none;
+	/* the text around them lets the pointer through to the scene, and these are for clicking */
+	pointer-events: auto;
+}
+
+.landing .routes h2 {
+	padding: 0 0.5em 0.5em;
+	font: inherit;
+	font-size: 0.82em;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.landing .routes a {
+	display: flex;
+	align-items: baseline;
+	gap: 0.8em;
+	padding: 0.35em 0.5em;
+	border-radius: 8px;
+	color: rgba(236, 255, 246, 0.9);
+	text-decoration: none;
+	transition: background-color 0.15s;
+}
+
+.landing .routes a:hover,
+.landing .routes a:focus-visible {
+	background: rgba(255, 255, 255, 0.08);
+	outline: none;
+}
+
+.landing .routes .arrow {
+	color: var(--mint);
+	transition: transform 0.15s;
+}
+
+.landing .routes a:hover .arrow,
+.landing .routes a:focus-visible .arrow {
+	transform: translateX(3px);
+}
+
+.landing .routes b {
+	color: var(--gold);
+	font-weight: 600;
+}
+
+/* a dotted line from the address across to what it is */
+.landing .routes i {
+	flex: 1;
+	min-width: 1.5em;
+	align-self: center;
+	border-bottom: 1px dotted rgba(255, 255, 255, 0.25);
 }
 
 .landing .caret {
@@ -238,10 +294,6 @@
 	.landing .gem {
 		display: none;
 	}
-
-	.landing .term pre {
-		height: 11em;
-	}
 }
 
 @media (max-height: 560px) {
@@ -257,7 +309,8 @@
 		animation: none;
 	}
 
-	.landing .gl {
+	.landing .gl,
+	.landing .routes {
 		transition: none;
 	}
 }
